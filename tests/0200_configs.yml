@@ -1,0 +1,56 @@
+---
+
+- name: "{{ test }}.1"
+  hosts: debian
+  become: true
+  vars:
+    manala_proftpd_configs_dir: /etc/proftpd/conf.d.test
+    manala_proftpd_configs:
+      - file: foo.conf
+        config:
+          - ServerName:        Manala ProFTPD Server
+          - DefaultRoot:       "~"
+          - AuthOrder:         mod_auth_file.c
+          - AuthUserFile:      /etc/ftpd.passwd
+          - RequireValidShell: false
+          - PassivePorts:      10000 10030
+      - file: foo_template.conf
+        template: configs/module.j2
+        name: foo
+      - file: foo_content.conf
+        content: |
+          <Anonymous ~ftp>
+            User foo
+          </Anonymous>
+      - file: foo_template_content.conf
+        template: configs/module.j2
+        content: |
+          <Anonymous ~ftp>
+            User foo
+          </Anonymous>
+      - file: bar.conf
+        state: present
+      - file: baz.conf
+        state: absent
+  roles:
+    - manala.proftpd
+  post_tasks:
+    - name: Goss
+      command: goss --gossfile {{ test }}.goss.1.yml validate
+
+- name: "{{ test }}.2"
+  hosts: debian
+  become: true
+  vars:
+    manala_proftpd_configs_dir: /etc/proftpd/conf.d.test
+    manala_proftpd_configs:
+      - file: foo.conf
+      - file: bar.conf
+        state: absent
+      - file: baz.conf
+        state: present
+  roles:
+    - manala.proftpd
+  post_tasks:
+    - name: Goss
+      command: goss --gossfile {{ test }}.goss.2.yml validate
